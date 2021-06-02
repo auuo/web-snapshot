@@ -1,4 +1,5 @@
 use crate::ElementHandler;
+use crate::Url;
 use crate::UrlManager;
 
 #[derive(PartialEq)]
@@ -29,7 +30,7 @@ impl SpiderContext {
         self.element_handlers.push(Box::new(handler));
     }
 
-    pub fn push_url(&mut self, url: String) -> bool {
+    pub fn push_url(&mut self, url: Url) -> bool {
         self.url_manager.push_url(url)
     }
 
