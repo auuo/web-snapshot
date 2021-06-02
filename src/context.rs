@@ -1,4 +1,5 @@
 use crate::ElementHandler;
+use crate::request::Request;
 use crate::Url;
 use crate::UrlManager;
 
@@ -10,6 +11,7 @@ enum Status {
 }
 
 pub struct SpiderContext {
+    request: Request,
     url_manager: Box<dyn UrlManager>,
     element_handlers: Vec<Box<dyn ElementHandler>>,
 
@@ -20,6 +22,7 @@ impl SpiderContext {
     pub fn new<U>(url_manager: U, element_handlers: Vec<Box<dyn ElementHandler>>) -> Self
         where U: UrlManager + 'static {
         Self {
+            request: Request::new(),
             url_manager: Box::new(url_manager),
             element_handlers,
             status: Status::INIT,
@@ -40,6 +43,15 @@ impl SpiderContext {
         }
         if self.element_handlers.len() == 0 {
             panic!("no handler")
+        }
+
+        while let Some(url) = self.url_manager.next_url() {
+            let res = self.request.request_url(&url.url);
+            if let Ok(ref ele) = res {
+                for h in self.element_handlers.iter_mut() {
+                    h.handle(self, ele);
+                }
+            }
         }
     }
 }
