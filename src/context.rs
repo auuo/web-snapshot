@@ -1,4 +1,4 @@
-use crate::handler::ElementHandler;
+use crate::ElementHandler;
 use crate::UrlManager;
 
 #[derive(PartialEq)]
