@@ -24,7 +24,7 @@ impl PartialEq for Url {
 pub trait UrlManager {
     fn push_url(&mut self, url: Url) -> bool;
 
-    fn next_url(&mut self) -> Option<Url>;
+    fn next_url(&mut self) -> Option<&Url>;
 }
 
 /// 广度优先的 url 管理器，也就是优先 pop 深度最浅的 url. <br/>
@@ -62,11 +62,11 @@ impl UrlManager for BreadthFirstUrlManager {
         true
     }
 
-    fn next_url(&mut self) -> Option<Url> {
+    fn next_url(&mut self) -> Option<&Url> {
         match self.pq.peek() {
-            Some((url, deep)) if deep.0 <= self.max_deep => {
-                self.pq.pop();
-                Some((*self.url_map.get(url).unwrap()).clone())
+            Some((_, deep)) if deep.0 <= self.max_deep => {
+                let (url, _) = self.pq.pop().unwrap();
+                self.url_map.get(&url)
             }
             _ => None
         }
