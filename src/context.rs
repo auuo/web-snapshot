@@ -48,8 +48,7 @@ impl SpiderContext {
         unsafe {
             let s = self as *mut Self;
             while let Some(url) = (*s).url_manager.next_url() {
-                let res = (*s).request.request_url(&url.url);
-                if let Ok(ref ele) = res {
+                if let Ok(ref ele) = (*s).request.request_url(&url.url) {
                     for h in (*s).element_handlers.iter_mut() {
                         h.handle(&mut *s, url, ele);
                     }
