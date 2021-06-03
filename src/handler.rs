@@ -1,5 +1,6 @@
-use crate::SpiderContext;
+use crate::{SpiderContext, Url};
 
+#[derive(Debug)]
 pub enum Element {
     HTML(String),
     PLAIN(String),
@@ -9,5 +10,5 @@ pub enum Element {
 }
 
 pub trait ElementHandler {
-    fn handle(&mut self, ctx: &mut SpiderContext, ele: &Element);
+    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, ele: &Element);
 }

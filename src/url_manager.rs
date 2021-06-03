@@ -3,7 +3,7 @@ use std::hash;
 use std::hash::Hasher;
 use std::cmp::Reverse;
 
-#[derive(Eq, Clone)]
+#[derive(Eq, Clone, Debug)]
 pub struct Url {
     pub url: String,
     pub deep: i32,
