@@ -1,8 +1,7 @@
-use anyhow::anyhow;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::StatusCode;
 
-use crate::{Element, Error};
+use crate::{Element, Error, SpiderError};
 
 pub struct Request {}
 
@@ -11,11 +10,11 @@ impl Request {
         Self {}
     }
 
-    pub fn request_url(&mut self, url: &String) -> anyhow::Result<Element> {
+    pub fn request_url(&mut self, url: &String) -> Result<Element, SpiderError> {
         let resp = reqwest::blocking::get(url)?;
 
         if !resp.status().is_success() {
-            return Err(anyhow!("http status error: {:?}", resp.status()));
+            return Err(SpiderError::HttpStatus(resp.status()));
         }
 
         let option = resp.headers()

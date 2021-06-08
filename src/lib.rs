@@ -8,6 +8,7 @@ pub use handler::ElementHandler;
 pub use url_manager::BreadthFirstUrlManager;
 pub use url_manager::Url;
 pub use url_manager::UrlManager;
+use reqwest::Error;
 
 mod context;
 mod handler;
@@ -21,4 +22,10 @@ pub enum SpiderError {
 
     #[error("unknown error: {0}")]
     Unknown(Box<dyn std::error::Error>),
+}
+
+impl From<reqwest::Error> for SpiderError {
+    fn from(e: Error) -> Self {
+       Self::Unknown(Box::new(e))
+    }
 }
