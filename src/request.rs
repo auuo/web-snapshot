@@ -1,7 +1,7 @@
 use reqwest::header::CONTENT_TYPE;
 use reqwest::StatusCode;
 
-use crate::{Element, Error, SpiderError};
+use crate::{Element, SpiderError};
 
 pub struct Request {}
 
