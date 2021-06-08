@@ -22,9 +22,9 @@ impl Request {
             .map(|h| h.to_str().unwrap_or(""));
 
         let ele = match option {
-            Some("text/html") => Element::HTML(resp.text()?),
-
             Some("application/json") => Element::JSON(resp.text()?),
+
+            Some(t) if t.starts_with("text/html") => Element::HTML(resp.text()?),
 
             Some(t) if t.starts_with("text/") => Element::TEXT {
                 subtype: t.strip_prefix("text/").unwrap().to_string(),
