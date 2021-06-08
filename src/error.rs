@@ -1,3 +1,5 @@
+use crate::{Url, SpiderContext};
+
 #[derive(thiserror::Error, Debug)]
 pub enum SpiderError {
     #[error("http status error: {0}")]
@@ -11,4 +13,8 @@ impl From<reqwest::Error> for SpiderError {
     fn from(e: reqwest::Error) -> Self {
         Self::Unknown(Box::new(e))
     }
+}
+
+pub trait ErrorHandler {
+    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, e: &SpiderError);
 }
