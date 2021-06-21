@@ -1,9 +1,9 @@
-use web_snapshot::{SpiderContext, BreadthFirstUrlManager, Element, Url, ElementHandler, SpiderError, ErrorHandler};
+use web_snapshot::{BreadthFirstUrlManager, Element, ElementHandler, ErrorHandler, SpiderContext, SpiderError, Url};
 
 struct HuaBanHandler {}
 
 impl ElementHandler for HuaBanHandler {
-    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, ele: &Element) {
+    fn handle(&mut self, _ctx: &mut SpiderContext, url: &Url, ele: &Element) {
         // todo find image url
         println!("url: {:?}, {:?}", url, ele);
     }
@@ -12,7 +12,7 @@ impl ElementHandler for HuaBanHandler {
 struct PrintErrorHandler {}
 
 impl ErrorHandler for PrintErrorHandler {
-    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, e: &SpiderError) {
+    fn handle(&mut self, _ctx: &mut SpiderContext, url: &Url, e: &SpiderError) {
         println!("An error occurred, url: {}, err: {:#?}", url.url, e)
     }
 }

@@ -1,7 +1,7 @@
-use std::collections::{HashSet, HashMap};
+use std::cmp::Reverse;
+use std::collections::HashMap;
 use std::hash;
 use std::hash::Hasher;
-use std::cmp::Reverse;
 
 #[derive(Eq, Clone, Debug)]
 pub struct Url {

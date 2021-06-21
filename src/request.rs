@@ -1,5 +1,4 @@
 use reqwest::header::CONTENT_TYPE;
-use reqwest::StatusCode;
 
 use crate::{Element, SpiderError};
 
