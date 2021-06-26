@@ -9,12 +9,12 @@ pub enum SpiderError {
     HandleErr(anyhow::Error),
 
     #[error("unknown error: {0}")]
-    Unknown(Box<dyn std::error::Error>),
+    Unknown(anyhow::Error),
 }
 
 impl From<reqwest::Error> for SpiderError {
     fn from(e: reqwest::Error) -> Self {
-        Self::Unknown(Box::new(e))
+        Self::Unknown(anyhow::Error::from(e))
     }
 }
 
