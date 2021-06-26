@@ -81,7 +81,7 @@ fn main() {
     let handlers: Vec<Box<dyn ElementHandler>> = vec![Box::new(HuaBanHandler::new(save_path))];
     let err_handlers: Vec<Box<dyn ErrorHandler>> = vec![Box::new(PrintErrorHandler {})];
 
-    let mut sc = SpiderContext::new(url_manager, handlers, err_handlers);
+    let mut sc = SpiderContext::new(url_manager, handlers, err_handlers, None);
 
     sc.push_url(Url::new(
         "https://huaban.com/discovery/beauty/".to_string(),

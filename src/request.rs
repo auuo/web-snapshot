@@ -1,22 +1,31 @@
 use reqwest::header::CONTENT_TYPE;
 
-use crate::{Element, SpiderError};
+use crate::{Element, SpiderError, Url};
 
-pub struct Request {}
+pub struct Request {
+    request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response>>>,
+}
 
 impl Request {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(
+        request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response>>>,
+    ) -> Self {
+        Self { request_builder }
     }
 
-    pub fn request_url(&mut self, url: &String) -> Result<Element, SpiderError> {
-        let resp = reqwest::blocking::get(url)?;
+    pub fn request_url(&mut self, url: &Url) -> Result<Element, SpiderError> {
+        let resp = if let Some(ref rb) = self.request_builder {
+            rb(url)?
+        } else {
+            reqwest::blocking::get(&url.url)?
+        };
 
         if !resp.status().is_success() {
             return Err(SpiderError::HttpStatus(resp.status()));
         }
 
-        let option = resp.headers()
+        let option = resp
+            .headers()
             .get(CONTENT_TYPE)
             .map(|h| h.to_str().unwrap_or(""));
 

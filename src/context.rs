@@ -24,12 +24,13 @@ impl SpiderContext {
         url_manager: U,
         element_handlers: Vec<Box<dyn ElementHandler>>,
         error_handlers: Vec<Box<dyn ErrorHandler>>,
+        request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response>>>,
     ) -> Self
     where
         U: UrlManager + 'static,
     {
         Self {
-            request: Request::new(),
+            request: Request::new(request_builder),
             url_manager: Box::new(url_manager),
             element_handlers,
             error_handlers,
@@ -54,7 +55,7 @@ impl SpiderContext {
         }
 
         while let Some(url) = self.url_manager.next_url() {
-            match self.request.request_url(&url.url) {
+            match self.request.request_url(&url) {
                 Ok(ref ele) => self.handle_element(&url, ele),
                 Err(ref e) => self.handle_err(&url, e),
             }
