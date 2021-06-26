@@ -7,6 +7,21 @@ use std::hash::Hasher;
 pub struct Url {
     pub url: String,
     pub deep: i32,
+    pub data: serde_json::Value,
+}
+
+impl Url {
+    pub fn new(url: String, deep: i32) -> Self {
+        Self {
+            url,
+            deep,
+            data: serde_json::Value::Null,
+        }
+    }
+
+    pub fn new_with_data(url: String, deep: i32, data: serde_json::Value) -> Self {
+        Self { url, deep, data }
+    }
 }
 
 impl hash::Hash for Url {
@@ -80,18 +95,11 @@ mod tests {
     #[test]
     fn breadth_first_url_manager_test() {
         let mut um = BreadthFirstUrlManager::new(3);
-        um.push_url(Url {
-            url: "google".to_string(),
-            deep: 3,
-        });
-        um.push_url(Url {
-            url: "bing".to_string(),
-            deep: 2,
-        });
-        um.push_url(Url {
-            url: "apple".to_string(),
-            deep: 4,
-        });
+
+        um.push_url(Url::new("google".to_string(), 3));
+        um.push_url(Url::new("bing".to_string(), 2));
+        um.push_url(Url::new("apple".to_string(), 4));
+
         assert_eq!(um.next_url().unwrap().url, "bing");
         assert_eq!(um.next_url().unwrap().url, "google");
         assert!(um.next_url().is_none());

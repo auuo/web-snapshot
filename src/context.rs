@@ -65,7 +65,9 @@ impl SpiderContext {
         unsafe {
             let s = self as *mut Self;
             for h in (*s).element_handlers.iter_mut() {
-                h.handle(self, url, ele);
+                if let Err(e) = h.handle(self, url, ele) {
+                    self.handle_err(url, &SpiderError::HandleErr(e));
+                }
             }
         }
     }
