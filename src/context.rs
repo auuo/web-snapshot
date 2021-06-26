@@ -1,6 +1,6 @@
 use crate::request::Request;
-use crate::Url;
 use crate::UrlManager;
+use crate::{Element, Url};
 use crate::{ElementHandler, ErrorHandler, SpiderError};
 
 #[derive(PartialEq)]
@@ -58,16 +58,21 @@ impl SpiderContext {
             while let Some(url) = (*s).url_manager.next_url() {
                 match (*s).request.request_url(&url.url) {
                     Ok(ref ele) => {
-                        for h in (*s).element_handlers.iter_mut() {
-                            if let Err(e) = h.handle(self, url, ele) {
-                                self.handle_err(url, &SpiderError::HandleErr(e));
-                            }
-                        }
+                        self.handle_element(url, ele)
                     }
                     Err(ref e) => {
                         self.handle_err(url, e);
                     }
                 }
+            }
+        }
+    }
+
+    fn handle_element(&mut self, url: &Url, ele: &Element) {
+        unsafe {
+            let s = self as *mut Self;
+            for h in (*s).element_handlers.iter_mut() {
+                h.handle(self, url, ele);
             }
         }
     }
