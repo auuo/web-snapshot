@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 
+use anyhow::anyhow;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde_json::Value;
@@ -21,7 +22,7 @@ impl HuaBanHandler {
 }
 
 impl ElementHandler for HuaBanHandler {
-    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, ele: &Element) {
+    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, ele: &Element) -> anyhow::Result<()> {
         lazy_static! {
             static ref PINS_RE: Regex = Regex::new(r#"app.page\["pins"\] = (\[\{.*\}\])"#).unwrap();
         }
@@ -29,8 +30,8 @@ impl ElementHandler for HuaBanHandler {
         match ele {
             Element::HTML(s) => {
                 if let Some(cap) = PINS_RE.captures(s) {
-                    let data: Result<Value, serde_json::Error> = serde_json::from_str(&cap[1]);
-                    if let Ok(Value::Array(pins)) = data {
+                    let data: Value = serde_json::from_str(&cap[1])?;
+                    if let Value::Array(pins) = data {
                         for pin in pins {
                             if let Value::String(key) = &pin["file"]["key"] {
                                 ctx.push_url(Url {
@@ -41,22 +42,21 @@ impl ElementHandler for HuaBanHandler {
                         }
                     }
                 } else {
-                    println!("can not extract pins");
+                    println!("can not extract pins: {}", s);
                 }
             }
             Element::IMAGE { body, subtype } => {
                 self.idx += 1;
 
-                if let Ok(mut output) =
-                    File::create(format!("{}/{}.{}", self.path, self.idx, subtype))
-                {
-                    output.write_all(body);
+                let mut output = File::create(format!("{}/{}.{}", self.path, self.idx, subtype))?;
+                output.write_all(body)?;
 
-                    println!("download image success, url: {:?}", url);
-                }
+                println!("download image success, url: {:?}", url);
             }
             _ => {}
         }
+
+        Ok(())
     }
 }
 

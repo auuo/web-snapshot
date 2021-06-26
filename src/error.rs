@@ -5,6 +5,9 @@ pub enum SpiderError {
     #[error("http status error: {0}")]
     HttpStatus(reqwest::StatusCode),
 
+    #[error("handle err: {0}")]
+    HandleErr(anyhow::Error),
+
     #[error("unknown error: {0}")]
     Unknown(Box<dyn std::error::Error>),
 }
