@@ -53,17 +53,10 @@ impl SpiderContext {
             panic!("no handler")
         }
 
-        unsafe {
-            let s = self as *mut Self;
-            while let Some(url) = (*s).url_manager.next_url() {
-                match (*s).request.request_url(&url.url) {
-                    Ok(ref ele) => {
-                        self.handle_element(url, ele)
-                    }
-                    Err(ref e) => {
-                        self.handle_err(url, e);
-                    }
-                }
+        while let Some(url) = self.url_manager.next_url() {
+            match self.request.request_url(&url.url) {
+                Ok(ref ele) => self.handle_element(&url, ele),
+                Err(ref e) => self.handle_err(&url, e),
             }
         }
     }

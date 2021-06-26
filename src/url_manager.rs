@@ -24,7 +24,7 @@ impl PartialEq for Url {
 pub trait UrlManager {
     fn push_url(&mut self, url: Url) -> bool;
 
-    fn next_url(&mut self) -> Option<&Url>;
+    fn next_url(&mut self) -> Option<Url>;
 }
 
 /// 广度优先的 url 管理器，也就是优先 pop 深度最浅的 url. <br/>
@@ -57,18 +57,18 @@ impl UrlManager for BreadthFirstUrlManager {
                 self.pq.push(url.url.clone(), Reverse(url.deep));
                 self.url_map.insert(url.url.clone(), url);
             }
-            _ => return false
+            _ => return false,
         };
         true
     }
 
-    fn next_url(&mut self) -> Option<&Url> {
+    fn next_url(&mut self) -> Option<Url> {
         match self.pq.peek() {
             Some((_, deep)) if deep.0 <= self.max_deep => {
                 let (url, _) = self.pq.pop().unwrap();
-                self.url_map.get(&url)
+                self.url_map.get(&url).map(|u| u.clone())
             }
-            _ => None
+            _ => None,
         }
     }
 }
@@ -80,9 +80,18 @@ mod tests {
     #[test]
     fn breadth_first_url_manager_test() {
         let mut um = BreadthFirstUrlManager::new(3);
-        um.push_url(Url { url: "google".to_string(), deep: 3 });
-        um.push_url(Url { url: "bing".to_string(), deep: 2 });
-        um.push_url(Url { url: "apple".to_string(), deep: 4 });
+        um.push_url(Url {
+            url: "google".to_string(),
+            deep: 3,
+        });
+        um.push_url(Url {
+            url: "bing".to_string(),
+            deep: 2,
+        });
+        um.push_url(Url {
+            url: "apple".to_string(),
+            deep: 4,
+        });
         assert_eq!(um.next_url().unwrap().url, "bing");
         assert_eq!(um.next_url().unwrap().url, "google");
         assert!(um.next_url().is_none());
