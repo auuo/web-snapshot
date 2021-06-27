@@ -3,6 +3,7 @@ use std::io::Write;
 
 use lazy_static::lazy_static;
 use regex::Regex;
+use serde_json::json;
 use serde_json::Value;
 use uuid::Uuid;
 
@@ -30,17 +31,7 @@ impl ElementHandler for HuaBanHandler {
             Element::HTML(s) => {
                 if let Some(cap) = PINS_RE.captures(s) {
                     let data: Value = serde_json::from_str(&cap[1])?;
-                    if let Value::Array(pins) = data {
-                        for pin in pins {
-                            if let Value::String(key) = &pin["file"]["key"] {
-                                ctx.push_url(Url::new_with_data(
-                                    format!("https://hbimg.huabanimg.com/{}", key),
-                                    url.deep + 1,
-                                    pin["file_id"].clone(),
-                                ));
-                            }
-                        }
-                    }
+                    self.handle_pins_array(ctx, &data, url.deep + 1);
                 } else {
                     println!("can not extract pins: {}", s);
                 }
@@ -49,7 +40,7 @@ impl ElementHandler for HuaBanHandler {
                 let mut output = File::create(format!(
                     "{}/{}.{}",
                     self.path,
-                    url.data
+                    url.data["file_id"]
                         .as_i64()
                         .map(|i| i.to_string())
                         .unwrap_or(Uuid::new_v4().to_string()),
@@ -59,10 +50,58 @@ impl ElementHandler for HuaBanHandler {
 
                 println!("download image success, url: {:?}", url);
             }
+            Element::JSON(json) => {
+                let data: Value = serde_json::from_str(json)?;
+                self.handle_pins_array(ctx, &data["pins"], url.deep + 1);
+            }
             _ => {}
         }
 
         Ok(())
+    }
+}
+
+impl HuaBanHandler {
+    fn handle_pins_array(
+        &mut self,
+        ctx: &mut SpiderContext,
+        data: &serde_json::Value,
+        cur_deep: i32,
+    ) {
+        if let Value::Array(pins) = data {
+            let mut max_pin_id = 0i64;
+
+            for pin in pins {
+                max_pin_id = max_pin_id.max(pin["pin_id"].as_i64().unwrap_or(0));
+
+                if let Value::String(key) = &pin["file"]["key"] {
+                    ctx.push_url(Url::new_with_data(
+                        format!("https://hbimg.huabanimg.com/{}", key),
+                        cur_deep + 1,
+                        json!({"file_id": pin["file_id"].clone()}),
+                    ));
+                }
+            }
+
+            println!("add pins: {:?}", pins);
+
+            // more pins
+            if max_pin_id != 0 {
+                ctx.push_url(Url::new_with_data(
+                    format!(
+                        "https://huaban.com/discovery/beauty?fetch&kqdiezeh&since={}&limit100&wfl1",
+                        max_pin_id
+                    ),
+                    cur_deep + 1,
+                    json!({
+                        "http_header": {
+                            "X-Request": "JSON",
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    }),
+                ));
+            }
+        }
     }
 }
 
@@ -74,14 +113,34 @@ impl ErrorHandler for PrintErrorHandler {
     }
 }
 
+fn request_builder(url: &Url) -> reqwest::Result<reqwest::blocking::Response> {
+    if let serde_json::Value::Object(headers) = &url.data["http_header"] {
+        let client = reqwest::blocking::Client::new();
+        let mut rb = client.get(&url.url);
+
+        for (k, v) in headers.iter() {
+            rb = rb.header(k, v.as_str().unwrap_or(""));
+        }
+
+        client.execute(rb.build()?)
+    } else {
+        reqwest::blocking::get(&url.url)
+    }
+}
+
 fn main() {
     let save_path = "C:/Users/ashley/Desktop/pins";
 
-    let url_manager = BreadthFirstUrlManager::new(2);
+    let url_manager = BreadthFirstUrlManager::new(5);
     let handlers: Vec<Box<dyn ElementHandler>> = vec![Box::new(HuaBanHandler::new(save_path))];
     let err_handlers: Vec<Box<dyn ErrorHandler>> = vec![Box::new(PrintErrorHandler {})];
 
-    let mut sc = SpiderContext::new(url_manager, handlers, err_handlers, None);
+    let mut sc = SpiderContext::new(
+        url_manager,
+        handlers,
+        err_handlers,
+        Some(Box::new(request_builder)),
+    );
 
     sc.push_url(Url::new(
         "https://huaban.com/discovery/beauty/".to_string(),

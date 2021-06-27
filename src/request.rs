@@ -30,7 +30,7 @@ impl Request {
             .map(|h| h.to_str().unwrap_or(""));
 
         let ele = match option {
-            Some("application/json") => Element::JSON(resp.text()?),
+            Some(t) if t.starts_with("application/json") => Element::JSON(resp.text()?),
 
             Some(t) if t.starts_with("text/html") => Element::HTML(resp.text()?),
 
