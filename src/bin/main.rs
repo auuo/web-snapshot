@@ -81,27 +81,30 @@ impl HuaBanHandler {
                         json!({"file_id": pin["file_id"].clone()}),
                     ));
                 }
+
+                if let Some(pin_id) = pin["pin_id"].as_i64() {
+                    self.add_more_pins(ctx, pin_id, cur_deep);
+                }
             }
 
             println!("add pins: {:?}", pins);
-
-            // more pins
-            if max_pin_id != 0 {
-                ctx.push_url(Url::new_with_data(
-                    format!(
-                        "https://huaban.com/discovery/beauty?fetch&kqdiezeh&since={}&limit100&wfl1",
-                        max_pin_id
-                    ),
-                    cur_deep + 1,
-                    json!({
-                        "http_header": {
-                            "X-Request": "JSON",
-                            "X-Requested-With": "XMLHttpRequest"
-                        }
-                    }),
-                ));
-            }
         }
+    }
+
+    fn add_more_pins(&self, ctx: &mut SpiderContext, pin_id: i64, cur_deep: i32) {
+        ctx.push_url(Url::new_with_data(
+            format!(
+                "https://huaban.com/discovery/beauty/?kqfbzohe&max={}&limit=30&wfl=1",
+                pin_id
+            ),
+            cur_deep + 1,
+            json!({
+                "http_header": {
+                    "X-Request": "JSON",
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            }),
+        ));
     }
 }
 
@@ -131,7 +134,7 @@ fn request_builder(url: &Url) -> reqwest::Result<reqwest::blocking::Response> {
 fn main() {
     let save_path = "C:/Users/ashley/Desktop/pins";
 
-    let url_manager = BreadthFirstUrlManager::new(5);
+    let url_manager = BreadthFirstUrlManager::new(100);
     let handlers: Vec<Box<dyn ElementHandler>> = vec![Box::new(HuaBanHandler::new(save_path))];
     let err_handlers: Vec<Box<dyn ErrorHandler>> = vec![Box::new(PrintErrorHandler {})];
 
