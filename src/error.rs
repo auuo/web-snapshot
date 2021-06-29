@@ -19,5 +19,5 @@ impl From<reqwest::Error> for SpiderError {
 }
 
 pub trait ErrorHandler {
-    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, e: &SpiderError);
+    fn handle(&self, ctx: &mut SpiderContext, url: &Url, e: &SpiderError);
 }

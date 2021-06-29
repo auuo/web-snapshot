@@ -13,7 +13,7 @@ impl Request {
         Self { request_builder }
     }
 
-    pub fn request_url(&mut self, url: &Url) -> Result<Element, SpiderError> {
+    pub fn request_url(&self, url: &Url) -> Result<Element, SpiderError> {
         let resp = if let Some(ref rb) = self.request_builder {
             rb(url)?
         } else {

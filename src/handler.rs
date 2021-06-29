@@ -12,5 +12,5 @@ pub enum Element {
 }
 
 pub trait ElementHandler {
-    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, ele: &Element) -> anyhow::Result<()>;
+    fn handle(&self, ctx: &mut SpiderContext, url: &Url, ele: &Element) -> anyhow::Result<()>;
 }
