@@ -42,11 +42,11 @@ impl SpiderContext {
         self.element_handlers.push(Box::new(handler));
     }
 
-    pub fn push_url(&mut self, url: Url) -> bool {
-        self.url_manager.push_url(url)
+    pub async fn push_url(&mut self, url: Url) -> bool {
+        self.url_manager.push_url(url).await
     }
 
-    pub fn run(&mut self) {
+    pub async fn run(&mut self) {
         if self.status != Status::INIT {
             panic!("spider already running")
         }
@@ -54,30 +54,30 @@ impl SpiderContext {
             panic!("no handler")
         }
 
-        while let Some(url) = self.url_manager.next_url() {
-            match self.request.request_url(&url) {
-                Ok(ref ele) => self.handle_element(&url, ele),
-                Err(ref e) => self.handle_err(&url, e),
+        while let Some(url) = self.url_manager.next_url().await {
+            match self.request.request_url(&url).await {
+                Ok(ref ele) => self.handle_element(&url, ele).await,
+                Err(ref e) => self.handle_err(&url, e).await,
             }
         }
     }
 
-    fn handle_element(&mut self, url: &Url, ele: &Element) {
+    async fn handle_element(&mut self, url: &Url, ele: &Element) {
         unsafe {
             let s = self as *mut Self;
             for h in (*s).element_handlers.iter_mut() {
-                if let Err(e) = h.handle(self, url, ele) {
-                    self.handle_err(url, &SpiderError::HandleErr(e));
+                if let Err(e) = h.handle(self, url, ele).await {
+                    self.handle_err(url, &SpiderError::HandleErr(e)).await;
                 }
             }
         }
     }
 
-    fn handle_err(&mut self, url: &Url, err: &SpiderError) {
+    async fn handle_err(&mut self, url: &Url, err: &SpiderError) {
         unsafe {
             let s = self as *mut Self;
             for h in (*s).error_handlers.iter_mut() {
-                h.handle(self, url, err);
+                h.handle(self, url, err).await;
             }
         }
     }

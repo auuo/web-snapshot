@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use std::hash;
 use std::hash::Hasher;
 
+use async_trait::async_trait;
+
 #[derive(Eq, Clone, Debug)]
 pub struct Url {
     pub url: String,
@@ -36,10 +38,11 @@ impl PartialEq for Url {
     }
 }
 
+#[async_trait]
 pub trait UrlManager {
-    fn push_url(&mut self, url: Url) -> bool;
+    async fn push_url(&mut self, url: Url) -> bool;
 
-    fn next_url(&mut self) -> Option<Url>;
+    async fn next_url(&mut self) -> Option<Url>;
 }
 
 /// 广度优先的 url 管理器，也就是优先 pop 深度最浅的 url. <br/>
@@ -60,8 +63,9 @@ impl BreadthFirstUrlManager {
     }
 }
 
+#[async_trait]
 impl UrlManager for BreadthFirstUrlManager {
-    fn push_url(&mut self, url: Url) -> bool {
+    async fn push_url(&mut self, url: Url) -> bool {
         match self.url_map.get(&url.url) {
             Some(Url { deep: d, .. }) if url.deep < *d => {
                 // 更新最新深度
@@ -77,7 +81,7 @@ impl UrlManager for BreadthFirstUrlManager {
         true
     }
 
-    fn next_url(&mut self) -> Option<Url> {
+    async fn next_url(&mut self) -> Option<Url> {
         match self.pq.peek() {
             Some((_, deep)) if deep.0 <= self.max_deep => {
                 let (url, _) = self.pq.pop().unwrap();

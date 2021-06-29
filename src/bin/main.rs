@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 
+use async_trait::async_trait;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde_json::json;
@@ -21,8 +22,14 @@ impl HuaBanHandler {
     }
 }
 
+#[async_trait]
 impl ElementHandler for HuaBanHandler {
-    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, ele: &Element) -> anyhow::Result<()> {
+    async fn handle(
+        &self,
+        ctx: &mut SpiderContext,
+        url: &Url,
+        ele: &Element,
+    ) -> anyhow::Result<()> {
         lazy_static! {
             static ref PINS_RE: Regex = Regex::new(r#"app.page\["pins"\] = (\[\{.*\}\])"#).unwrap();
         }
@@ -63,7 +70,7 @@ impl ElementHandler for HuaBanHandler {
 
 impl HuaBanHandler {
     fn handle_pins_array(
-        &mut self,
+        &self,
         ctx: &mut SpiderContext,
         data: &serde_json::Value,
         cur_deep: i32,
@@ -110,8 +117,9 @@ impl HuaBanHandler {
 
 struct PrintErrorHandler {}
 
+#[async_trait]
 impl ErrorHandler for PrintErrorHandler {
-    fn handle(&mut self, _ctx: &mut SpiderContext, url: &Url, e: &SpiderError) {
+    async fn handle(&self, _ctx: &mut SpiderContext, url: &Url, e: &SpiderError) {
         println!("An error occurred, url: {}, err: {:#?}", url.url, e)
     }
 }

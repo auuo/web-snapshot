@@ -17,6 +17,7 @@ regex = "1"
 lazy_static = "1.4.0"
 serde_json = "1.0"
 uuid = { version = "0.7", features = ["serde", "v4"] }
+async-trait = "0.1.50"
 
 [[bin]]
 name = "main"
