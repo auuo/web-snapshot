@@ -127,18 +127,18 @@ impl ErrorHandler for PrintErrorHandler {
     }
 }
 
-fn request_builder(url: &Url) -> reqwest::Result<reqwest::blocking::Response> {
+async fn request_builder(url: &Url) -> reqwest::Result<reqwest::Response> {
     if let serde_json::Value::Object(headers) = &url.data["http_header"] {
-        let client = reqwest::blocking::Client::new();
+        let client = reqwest::Client::new();
         let mut rb = client.get(&url.url);
 
         for (k, v) in headers.iter() {
             rb = rb.header(k, v.as_str().unwrap_or(""));
         }
 
-        client.execute(rb.build()?)
+        client.execute(rb.build()?).await
     } else {
-        reqwest::blocking::get(&url.url)
+        reqwest::get(&url.url).await
     }
 }
 

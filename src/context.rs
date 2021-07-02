@@ -24,7 +24,7 @@ impl SpiderContext {
         url_manager: U,
         element_handlers: Vec<Box<dyn ElementHandler>>,
         error_handlers: Vec<Box<dyn ErrorHandler>>,
-        request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response> + Send>>,
+        request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::Response> + Send>>,
     ) -> Self
     where
         U: UrlManager + 'static,

@@ -1,23 +1,24 @@
 use reqwest::header::CONTENT_TYPE;
 
 use crate::{Element, SpiderError, Url};
+use std::future::Future;
 
 pub struct Request {
-    request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response> + Send>>,
+    request_builder: Option<Box<dyn (Fn(&Url) -> dyn Future<Output=reqwest::Result<reqwest::Response>>) + Send>>,
 }
 
 impl Request {
     pub fn new(
-        request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response> + Send>>,
+        request_builder: Option<Box<dyn (Fn(&Url) -> dyn Future<Output=reqwest::Result<reqwest::Response>>) + Send>>,
     ) -> Self {
         Self { request_builder }
     }
 
     pub async fn request_url(&self, url: &Url) -> Result<Element, SpiderError> {
         let resp = if let Some(ref rb) = self.request_builder {
-            rb(url)?
+            rb(url).await?
         } else {
-            reqwest::blocking::get(&url.url)?
+            reqwest::get(&url.url).await?
         };
 
         if !resp.status().is_success() {
@@ -30,28 +31,28 @@ impl Request {
             .map(|h| h.to_str().unwrap_or(""));
 
         let ele = match option {
-            Some(t) if t.starts_with("application/json") => Element::JSON(resp.text()?),
+            Some(t) if t.starts_with("application/json") => Element::JSON(resp.text().await?),
 
-            Some(t) if t.starts_with("text/html") => Element::HTML(resp.text()?),
+            Some(t) if t.starts_with("text/html") => Element::HTML(resp.text().await?),
 
             Some(t) if t.starts_with("text/") => Element::TEXT {
                 subtype: t.strip_prefix("text/").unwrap().to_string(),
-                body: resp.text()?,
+                body: resp.text().await?,
             },
 
             Some(t) if t.starts_with("image/") => Element::IMAGE {
                 subtype: t.strip_prefix("image/").unwrap().to_string(),
-                body: resp.bytes()?,
+                body: resp.bytes().await?,
             },
 
             Some(t) => Element::OTHER {
                 c_type: t.split_once("/").map(|t| t.0).unwrap_or("").to_string(),
                 subtype: t.split_once("/").map(|t| t.1).unwrap_or("").to_string(),
-                body: resp.bytes()?,
+                body: resp.bytes().await?,
             },
 
             None => Element::OTHER {
-                body: resp.bytes()?,
+                body: resp.bytes().await?,
                 c_type: "".to_string(),
                 subtype: "".to_string(),
             },
