@@ -13,6 +13,6 @@ pub enum Element {
 }
 
 #[async_trait]
-pub trait ElementHandler {
+pub trait ElementHandler: Send {
     async fn handle(&self, ctx: &mut SpiderContext, url: &Url, ele: &Element) -> anyhow::Result<()>;
 }

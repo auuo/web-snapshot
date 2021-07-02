@@ -3,12 +3,12 @@ use reqwest::header::CONTENT_TYPE;
 use crate::{Element, SpiderError, Url};
 
 pub struct Request {
-    request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response>>>,
+    request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response> + Send>>,
 }
 
 impl Request {
     pub fn new(
-        request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response>>>,
+        request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::blocking::Response> + Send>>,
     ) -> Self {
         Self { request_builder }
     }

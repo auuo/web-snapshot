@@ -39,7 +39,7 @@ impl PartialEq for Url {
 }
 
 #[async_trait]
-pub trait UrlManager {
+pub trait UrlManager: Send {
     async fn push_url(&mut self, url: Url) -> bool;
 
     async fn next_url(&mut self) -> Option<Url>;

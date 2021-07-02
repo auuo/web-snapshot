@@ -21,6 +21,6 @@ impl From<reqwest::Error> for SpiderError {
 }
 
 #[async_trait]
-pub trait ErrorHandler {
+pub trait ErrorHandler: Send {
     async fn handle(&self, ctx: &mut SpiderContext, url: &Url, e: &SpiderError);
 }
