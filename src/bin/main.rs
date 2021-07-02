@@ -38,7 +38,7 @@ impl ElementHandler for HuaBanHandler {
             Element::HTML(s) => {
                 if let Some(cap) = PINS_RE.captures(s) {
                     let data: Value = serde_json::from_str(&cap[1])?;
-                    self.handle_pins_array(ctx, &data, url.deep + 1);
+                    self.handle_pins_array(ctx, &data, url.deep + 1).await;
                 } else {
                     println!("can not extract pins: {}", s);
                 }
@@ -59,7 +59,8 @@ impl ElementHandler for HuaBanHandler {
             }
             Element::JSON(json) => {
                 let data: Value = serde_json::from_str(json)?;
-                self.handle_pins_array(ctx, &data["pins"], url.deep + 1);
+                self.handle_pins_array(ctx, &data["pins"], url.deep + 1)
+                    .await;
             }
             _ => {}
         }
@@ -69,7 +70,7 @@ impl ElementHandler for HuaBanHandler {
 }
 
 impl HuaBanHandler {
-    fn handle_pins_array(
+    async fn handle_pins_array(
         &self,
         ctx: &mut SpiderContext,
         data: &serde_json::Value,
@@ -86,11 +87,12 @@ impl HuaBanHandler {
                         format!("https://hbimg.huabanimg.com/{}", key),
                         cur_deep + 1,
                         json!({"file_id": pin["file_id"].clone()}),
-                    ));
+                    ))
+                    .await;
                 }
 
                 if let Some(pin_id) = pin["pin_id"].as_i64() {
-                    self.add_more_pins(ctx, pin_id, cur_deep);
+                    self.add_more_pins(ctx, pin_id, cur_deep).await;
                 }
             }
 
@@ -98,7 +100,7 @@ impl HuaBanHandler {
         }
     }
 
-    fn add_more_pins(&self, ctx: &mut SpiderContext, pin_id: i64, cur_deep: i32) {
+    async fn add_more_pins(&self, ctx: &mut SpiderContext, pin_id: i64, cur_deep: i32) {
         ctx.push_url(Url::new_with_data(
             format!(
                 "https://huaban.com/discovery/beauty/?kqfbzohe&max={}&limit=30&wfl=1",
@@ -111,7 +113,8 @@ impl HuaBanHandler {
                     "X-Requested-With": "XMLHttpRequest"
                 }
             }),
-        ));
+        ))
+        .await;
     }
 }
 
@@ -139,8 +142,9 @@ fn request_builder(url: &Url) -> reqwest::Result<reqwest::blocking::Response> {
     }
 }
 
-fn main() {
-    let save_path = "C:/Users/ashley/Desktop/pins";
+#[tokio::main]
+async fn main() {
+    let save_path = "/Users/youbo/Desktop/huaban";
 
     let url_manager = BreadthFirstUrlManager::new(100);
     let handlers: Vec<Box<dyn ElementHandler>> = vec![Box::new(HuaBanHandler::new(save_path))];
@@ -156,6 +160,8 @@ fn main() {
     sc.push_url(Url::new(
         "https://huaban.com/discovery/beauty/".to_string(),
         0,
-    ));
-    sc.run();
+    ))
+    .await;
+
+    sc.run().await;
 }
