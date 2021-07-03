@@ -1,5 +1,5 @@
 use crate::request::Request;
-use crate::UrlManager;
+use crate::{UrlManager, RequestBuilder};
 use crate::{Element, Url};
 use crate::{ElementHandler, ErrorHandler, SpiderError};
 
@@ -24,7 +24,7 @@ impl SpiderContext {
         url_manager: U,
         element_handlers: Vec<Box<dyn ElementHandler>>,
         error_handlers: Vec<Box<dyn ErrorHandler>>,
-        request_builder: Option<Box<dyn Fn(&Url) -> reqwest::Result<reqwest::Response> + Send>>,
+        request_builder: Option<Box<dyn RequestBuilder>>,
     ) -> Self
     where
         U: UrlManager + 'static,

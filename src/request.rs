@@ -1,22 +1,25 @@
+use async_trait::async_trait;
 use reqwest::header::CONTENT_TYPE;
 
 use crate::{Element, SpiderError, Url};
-use std::future::Future;
 
 pub struct Request {
-    request_builder: Option<Box<dyn (Fn(&Url) -> dyn Future<Output=reqwest::Result<reqwest::Response>>) + Send>>,
+    request_builder: Option<Box<dyn RequestBuilder>>,
+}
+
+#[async_trait]
+pub trait RequestBuilder: Send {
+    async fn build(&self, url: &Url) -> reqwest::Result<reqwest::Response>;
 }
 
 impl Request {
-    pub fn new(
-        request_builder: Option<Box<dyn (Fn(&Url) -> dyn Future<Output=reqwest::Result<reqwest::Response>>) + Send>>,
-    ) -> Self {
+    pub fn new(request_builder: Option<Box<dyn RequestBuilder>>) -> Self {
         Self { request_builder }
     }
 
     pub async fn request_url(&self, url: &Url) -> Result<Element, SpiderError> {
         let resp = if let Some(ref rb) = self.request_builder {
-            rb(url).await?
+            rb.build(url).await?
         } else {
             reqwest::get(&url.url).await?
         };

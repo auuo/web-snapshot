@@ -9,7 +9,8 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use web_snapshot::{
-    BreadthFirstUrlManager, Element, ElementHandler, ErrorHandler, SpiderContext, SpiderError, Url,
+    BreadthFirstUrlManager, Element, ElementHandler, ErrorHandler, RequestBuilder, SpiderContext,
+    SpiderError, Url,
 };
 
 struct HuaBanHandler {
@@ -127,24 +128,29 @@ impl ErrorHandler for PrintErrorHandler {
     }
 }
 
-async fn request_builder(url: &Url) -> reqwest::Result<reqwest::Response> {
-    if let serde_json::Value::Object(headers) = &url.data["http_header"] {
-        let client = reqwest::Client::new();
-        let mut rb = client.get(&url.url);
+struct HuaBanRequestBuilder {}
 
-        for (k, v) in headers.iter() {
-            rb = rb.header(k, v.as_str().unwrap_or(""));
+#[async_trait]
+impl RequestBuilder for HuaBanRequestBuilder {
+    async fn build(&self, url: &Url) -> reqwest::Result<reqwest::Response> {
+        if let serde_json::Value::Object(headers) = &url.data["http_header"] {
+            let client = reqwest::Client::new();
+            let mut rb = client.get(&url.url);
+
+            for (k, v) in headers.iter() {
+                rb = rb.header(k, v.as_str().unwrap_or(""));
+            }
+
+            client.execute(rb.build()?).await
+        } else {
+            reqwest::get(&url.url).await
         }
-
-        client.execute(rb.build()?).await
-    } else {
-        reqwest::get(&url.url).await
     }
 }
 
 #[tokio::main]
 async fn main() {
-    let save_path = "/Users/youbo/Desktop/huaban";
+    let save_path = "C:/Users/ashley/Desktop/async_pins";
 
     let url_manager = BreadthFirstUrlManager::new(100);
     let handlers: Vec<Box<dyn ElementHandler>> = vec![Box::new(HuaBanHandler::new(save_path))];
@@ -154,7 +160,7 @@ async fn main() {
         url_manager,
         handlers,
         err_handlers,
-        Some(Box::new(request_builder)),
+        Some(Box::new(HuaBanRequestBuilder {})),
     );
 
     sc.push_url(Url::new(
