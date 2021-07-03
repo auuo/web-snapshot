@@ -8,7 +8,7 @@ pub struct Request {
 }
 
 #[async_trait]
-pub trait RequestBuilder: Send {
+pub trait RequestBuilder: Send + Sync {
     async fn build(&self, url: &Url) -> reqwest::Result<reqwest::Response>;
 }
 

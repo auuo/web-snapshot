@@ -1,7 +1,12 @@
-use crate::request::Request;
-use crate::{UrlManager, RequestBuilder};
+use std::borrow::BorrowMut;
+use std::sync::Arc;
+
+use tokio::sync::mpsc;
+
+use crate::{RequestBuilder, UrlManager};
 use crate::{Element, Url};
 use crate::{ElementHandler, ErrorHandler, SpiderError};
+use crate::request::Request;
 
 #[derive(PartialEq)]
 enum Status {
@@ -54,12 +59,41 @@ impl SpiderContext {
             panic!("no handler")
         }
 
-        while let Some(url) = self.url_manager.next_url().await {
-            match self.request.request_url(&url).await {
-                Ok(ref ele) => self.handle_element(&url, ele).await,
-                Err(ref e) => self.handle_err(&url, e).await,
+        let max_task_num = 10;
+
+        let (tx, mut rx) = mpsc::channel(10);
+        let mut running = 0;
+
+        running += self.try_boot_task(max_task_num, tx.clone()).await;
+
+        while let Some(_) = rx.recv().await {
+            running -= 1;
+
+            running += self.try_boot_task(max_task_num - running, tx.clone()).await;
+
+            if running == 0 {
+                break;
             }
         }
+    }
+
+    // 尝试启动 num 个任务
+    async fn try_boot_task(&mut self, num: i32, tx: mpsc::Sender<bool>) -> i32 {
+        for i in 0..num {
+            if let Some(url) = self.url_manager.next_url().await {
+                tokio::spawn(async move {
+                    match self.request.request_url(&url).await {
+                        Ok(ref ele) => self.handle_element(&url, ele).await,
+                        Err(ref e) => self.handle_err(&url, e).await,
+                    }
+
+                    tx.send(true).await
+                });
+            } else {
+                return i;
+            }
+        }
+        num
     }
 
     async fn handle_element(&mut self, url: &Url, ele: &Element) {
