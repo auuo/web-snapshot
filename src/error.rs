@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::{SpiderApplication, Url};
+use crate::{SpiderContext, Url};
 
 #[derive(thiserror::Error, Debug)]
 pub enum SpiderError {
@@ -22,5 +22,5 @@ impl From<reqwest::Error> for SpiderError {
 
 #[async_trait]
 pub trait ErrorHandler: Send + Sync {
-    async fn handle(&self, ctx: &mut SpiderApplication, url: &Url, e: &SpiderError);
+    async fn handle(&self, ctx: &mut SpiderContext, url: &Url, e: &SpiderError);
 }

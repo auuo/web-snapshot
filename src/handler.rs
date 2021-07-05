@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 
-use crate::{SpiderApplication, Url};
+use crate::{SpiderContext, Url};
 
 #[derive(Debug)]
 pub enum Element {
@@ -14,5 +14,5 @@ pub enum Element {
 
 #[async_trait]
 pub trait ElementHandler: Send + Sync {
-    async fn handle(&self, ctx: &mut SpiderApplication, url: &Url, ele: &Element) -> anyhow::Result<()>;
+    async fn handle(&self, ctx: &mut SpiderContext, url: &Url, ele: &Element) -> anyhow::Result<()>;
 }

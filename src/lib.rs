@@ -1,4 +1,5 @@
 pub use application::SpiderApplication;
+pub use context::SpiderContext;
 pub use error::ErrorHandler;
 pub use error::SpiderError;
 pub use handler::Element;
@@ -9,7 +10,8 @@ pub use url_manager::Url;
 pub use url_manager::UrlManager;
 
 mod application;
-mod handler;
-mod url_manager;
-mod request;
+mod context;
 mod error;
+mod handler;
+mod request;
+mod url_manager;
