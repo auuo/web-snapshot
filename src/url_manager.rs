@@ -39,7 +39,7 @@ impl PartialEq for Url {
 }
 
 #[async_trait]
-pub trait UrlManager: Send + Sync {
+pub trait UrlManager {
     async fn push_url(&mut self, url: Url) -> bool;
 
     async fn next_url(&mut self) -> Option<Url>;
@@ -96,16 +96,16 @@ impl UrlManager for BreadthFirstUrlManager {
 mod tests {
     use super::*;
 
-    #[test]
-    fn breadth_first_url_manager_test() {
+    #[tokio::test]
+    async fn breadth_first_url_manager_test() {
         let mut um = BreadthFirstUrlManager::new(3);
 
-        um.push_url(Url::new("google".to_string(), 3));
-        um.push_url(Url::new("bing".to_string(), 2));
-        um.push_url(Url::new("apple".to_string(), 4));
+        um.push_url(Url::new("google".to_string(), 3)).await;
+        um.push_url(Url::new("bing".to_string(), 2)).await;
+        um.push_url(Url::new("apple".to_string(), 4)).await;
 
-        assert_eq!(um.next_url().unwrap().url, "bing");
-        assert_eq!(um.next_url().unwrap().url, "google");
-        assert!(um.next_url().is_none());
+        assert_eq!(um.next_url().await.unwrap().url, "bing");
+        assert_eq!(um.next_url().await.unwrap().url, "google");
+        assert!(um.next_url().await.is_none());
     }
 }
