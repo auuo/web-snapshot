@@ -69,7 +69,7 @@ impl SpiderApplication {
             // todo 怎么识别结束
             select! {
                 Some(url) = url_rx.recv() => {
-                    self.url_manager.push_url(url);
+                    let _ = self.url_manager.push_url(url).await;
                 },
                 Some(_) = finish_rx.recv() => {
                     running -= 1;
