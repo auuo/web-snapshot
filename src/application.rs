@@ -15,7 +15,7 @@ enum Status {
     FINISH,
 }
 
-pub struct SpiderContext {
+pub struct SpiderApplication {
     request: Request,
     url_manager: Box<dyn UrlManager>,
     element_handlers: Vec<Box<dyn ElementHandler>>,
@@ -24,7 +24,7 @@ pub struct SpiderContext {
     status: Status,
 }
 
-impl SpiderContext {
+impl SpiderApplication {
     pub fn new<U>(
         url_manager: U,
         element_handlers: Vec<Box<dyn ElementHandler>>,

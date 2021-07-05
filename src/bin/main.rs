@@ -9,7 +9,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use web_snapshot::{
-    BreadthFirstUrlManager, Element, ElementHandler, ErrorHandler, RequestBuilder, SpiderContext,
+    BreadthFirstUrlManager, Element, ElementHandler, ErrorHandler, RequestBuilder, SpiderApplication,
     SpiderError, Url,
 };
 
@@ -27,7 +27,7 @@ impl HuaBanHandler {
 impl ElementHandler for HuaBanHandler {
     async fn handle(
         &self,
-        ctx: &mut SpiderContext,
+        ctx: &mut SpiderApplication,
         url: &Url,
         ele: &Element,
     ) -> anyhow::Result<()> {
@@ -73,7 +73,7 @@ impl ElementHandler for HuaBanHandler {
 impl HuaBanHandler {
     async fn handle_pins_array(
         &self,
-        ctx: &mut SpiderContext,
+        ctx: &mut SpiderApplication,
         data: &serde_json::Value,
         cur_deep: i32,
     ) {
@@ -101,7 +101,7 @@ impl HuaBanHandler {
         }
     }
 
-    async fn add_more_pins(&self, ctx: &mut SpiderContext, pin_id: i64, cur_deep: i32) {
+    async fn add_more_pins(&self, ctx: &mut SpiderApplication, pin_id: i64, cur_deep: i32) {
         ctx.push_url(Url::new_with_data(
             format!(
                 "https://huaban.com/discovery/beauty/?kqfbzohe&max={}&limit=30&wfl=1",
@@ -123,7 +123,7 @@ struct PrintErrorHandler {}
 
 #[async_trait]
 impl ErrorHandler for PrintErrorHandler {
-    async fn handle(&self, _ctx: &mut SpiderContext, url: &Url, e: &SpiderError) {
+    async fn handle(&self, _ctx: &mut SpiderApplication, url: &Url, e: &SpiderError) {
         println!("An error occurred, url: {}, err: {:#?}", url.url, e)
     }
 }
@@ -156,7 +156,7 @@ async fn main() {
     let handlers: Vec<Box<dyn ElementHandler>> = vec![Box::new(HuaBanHandler::new(save_path))];
     let err_handlers: Vec<Box<dyn ErrorHandler>> = vec![Box::new(PrintErrorHandler {})];
 
-    let mut sc = SpiderContext::new(
+    let mut sc = SpiderApplication::new(
         url_manager,
         handlers,
         err_handlers,
