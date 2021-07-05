@@ -1,11 +1,10 @@
-use std::fs::File;
-use std::io::Write;
-
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde_json::json;
 use serde_json::Value;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
 use web_snapshot::{
@@ -53,8 +52,9 @@ impl ElementHandler for HuaBanHandler {
                         .map(|i| i.to_string())
                         .unwrap_or(Uuid::new_v4().to_string()),
                     subtype
-                ))?;
-                output.write_all(body)?;
+                ))
+                .await?;
+                output.write_all(body).await?;
 
                 println!("download image success, url: {:?}", url);
             }
