@@ -1,20 +1,26 @@
-use crate::{Url, SpiderContext};
+use async_trait::async_trait;
+
+use crate::{SpiderContext, Url};
 
 #[derive(thiserror::Error, Debug)]
 pub enum SpiderError {
     #[error("http status error: {0}")]
     HttpStatus(reqwest::StatusCode),
 
+    #[error("handle err: {0}")]
+    HandleErr(anyhow::Error),
+
     #[error("unknown error: {0}")]
-    Unknown(Box<dyn std::error::Error>),
+    Unknown(anyhow::Error),
 }
 
 impl From<reqwest::Error> for SpiderError {
     fn from(e: reqwest::Error) -> Self {
-        Self::Unknown(Box::new(e))
+        Self::Unknown(anyhow::Error::from(e))
     }
 }
 
-pub trait ErrorHandler {
-    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, e: &SpiderError);
+#[async_trait]
+pub trait ErrorHandler: Send + Sync {
+    async fn handle(&self, ctx: &mut SpiderContext, url: &Url, e: &SpiderError);
 }

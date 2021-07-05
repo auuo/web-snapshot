@@ -1,12 +1,29 @@
-use std::collections::{HashSet, HashMap};
+use std::cmp::Reverse;
+use std::collections::HashMap;
 use std::hash;
 use std::hash::Hasher;
-use std::cmp::Reverse;
+
+use async_trait::async_trait;
 
 #[derive(Eq, Clone, Debug)]
 pub struct Url {
     pub url: String,
     pub deep: i32,
+    pub data: serde_json::Value,
+}
+
+impl Url {
+    pub fn new(url: String, deep: i32) -> Self {
+        Self {
+            url,
+            deep,
+            data: serde_json::Value::Null,
+        }
+    }
+
+    pub fn new_with_data(url: String, deep: i32, data: serde_json::Value) -> Self {
+        Self { url, deep, data }
+    }
 }
 
 impl hash::Hash for Url {
@@ -21,10 +38,11 @@ impl PartialEq for Url {
     }
 }
 
+#[async_trait]
 pub trait UrlManager {
-    fn push_url(&mut self, url: Url) -> bool;
+    async fn push_url(&mut self, url: Url) -> bool;
 
-    fn next_url(&mut self) -> Option<&Url>;
+    async fn next_url(&mut self) -> Option<Url>;
 }
 
 /// 广度优先的 url 管理器，也就是优先 pop 深度最浅的 url. <br/>
@@ -45,8 +63,9 @@ impl BreadthFirstUrlManager {
     }
 }
 
+#[async_trait]
 impl UrlManager for BreadthFirstUrlManager {
-    fn push_url(&mut self, url: Url) -> bool {
+    async fn push_url(&mut self, url: Url) -> bool {
         match self.url_map.get(&url.url) {
             Some(Url { deep: d, .. }) if url.deep < *d => {
                 // 更新最新深度
@@ -57,18 +76,18 @@ impl UrlManager for BreadthFirstUrlManager {
                 self.pq.push(url.url.clone(), Reverse(url.deep));
                 self.url_map.insert(url.url.clone(), url);
             }
-            _ => return false
+            _ => return false,
         };
         true
     }
 
-    fn next_url(&mut self) -> Option<&Url> {
+    async fn next_url(&mut self) -> Option<Url> {
         match self.pq.peek() {
             Some((_, deep)) if deep.0 <= self.max_deep => {
                 let (url, _) = self.pq.pop().unwrap();
-                self.url_map.get(&url)
+                self.url_map.get(&url).map(|u| u.clone())
             }
-            _ => None
+            _ => None,
         }
     }
 }
@@ -77,14 +96,16 @@ impl UrlManager for BreadthFirstUrlManager {
 mod tests {
     use super::*;
 
-    #[test]
-    fn breadth_first_url_manager_test() {
+    #[tokio::test]
+    async fn breadth_first_url_manager_test() {
         let mut um = BreadthFirstUrlManager::new(3);
-        um.push_url(Url { url: "google".to_string(), deep: 3 });
-        um.push_url(Url { url: "bing".to_string(), deep: 2 });
-        um.push_url(Url { url: "apple".to_string(), deep: 4 });
-        assert_eq!(um.next_url().unwrap().url, "bing");
-        assert_eq!(um.next_url().unwrap().url, "google");
-        assert!(um.next_url().is_none());
+
+        um.push_url(Url::new("google".to_string(), 3)).await;
+        um.push_url(Url::new("bing".to_string(), 2)).await;
+        um.push_url(Url::new("apple".to_string(), 4)).await;
+
+        assert_eq!(um.next_url().await.unwrap().url, "bing");
+        assert_eq!(um.next_url().await.unwrap().url, "google");
+        assert!(um.next_url().await.is_none());
     }
 }

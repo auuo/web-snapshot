@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use bytes::Bytes;
 
 use crate::{SpiderContext, Url};
@@ -11,6 +12,7 @@ pub enum Element {
     OTHER { body: Bytes, c_type: String, subtype: String },
 }
 
-pub trait ElementHandler {
-    fn handle(&mut self, ctx: &mut SpiderContext, url: &Url, ele: &Element);
+#[async_trait]
+pub trait ElementHandler: Send + Sync {
+    async fn handle(&self, ctx: &mut SpiderContext, url: &Url, ele: &Element) -> anyhow::Result<()>;
 }
